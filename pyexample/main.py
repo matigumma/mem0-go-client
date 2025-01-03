@@ -55,7 +55,7 @@ async def store_memory(request: StoreMemoryRequest):
             metadata=request.metadata or {}
         )
         
-        result = mem0_client.Store(store_options)
+        result = mem0_client.Add(store_options)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

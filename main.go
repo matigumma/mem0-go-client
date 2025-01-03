@@ -2,15 +2,11 @@ package main
 
 import (
 	"bufio"
-	"context"
-	"fmt"
 	"log"
 	"os"
 	"strings"
-	"time"
 
-	"github.com/aws/smithy-go/ptr"
-	mem "github.com/matigumma/mem0-go-client/mem0client"
+	"github.com/matigumma/mem0-go-client/pyexample"
 )
 
 func main() {
@@ -33,70 +29,81 @@ func main() {
 		}
 	}
 
-	// Create client with debug logging and custom configuration
-	client := mem.NewMem0Client(apiKey,
-		mem.WithDebug(true),
-		mem.WithBaseURL("https://api.mem0.ai/v1"), // Optional custom base URL
-		// mem.WithUserID("custom-user-123"),
-		// mem.WithOrganizationID("org-123"),
-		// mem.WithProjectID("project-456"),
-	)
-
-	ctx := context.Background()
-
-	timestamp := time.Now().UTC().Format(time.RFC3339)
-
-	UserID := "test-user"
-	// AgentID := "test-agent"
-	// AppID := "test-app"
-	// RunID := "test-run"
-
-	// Store a memory with comprehensive options
-	storeOpts := &mem.StoreOptions{
-		Messages: []mem.Message{
-			{
-				Role:    "user",
-				Content: fmt.Sprintf("Test memory created at %s", timestamp),
-			},
-		},
-		OutputFormat: ptr.String("v1.1"),
-		UserID:       UserID,
-		// Infer:        ptr.Bool(false),
-		// AgentID:      AgentID,
-		// AppID:        AppID,
-		// RunID:        RunID,
-		Metadata: mem.Metadata{
-			"source":    "test_client",
-			"timestamp": timestamp,
-			"test_run":  "memory_retrieval_test",
-		},
+	messages := []pyexample.Message{
+		{Role: "user", Content: "Hi, I'm Alex. I'm a vegetarian and I'm allergic to nuts."},
+		{Role: "assistant", Content: "Hello Alex! I've noted that you're a vegetarian and have a nut allergy."},
 	}
 
-	memory, err := client.Store(ctx, storeOpts)
+	err := pyexample.StoreMemory(messages, "alex", apiKey)
 	if err != nil {
 		log.Fatalf("Failed to store memory: %v", err)
 	}
-	fmt.Printf("Stored Memory ID: %s\n", memory.ID)
 
-	// Demonstrate GetMemories
-	getOpts := &mem.GetMemoriesOptions{
-		UserID:   UserID,
-		PageSize: 10,
-		Page:     1,
-		Keywords: "test",
-		Metadata: map[string]string{
-			"test_run": "memory_retrieval_test",
-		},
-	}
-	memories, err := client.GetMemories(ctx, getOpts)
-	if err != nil {
-		log.Fatalf("Failed to get memories: %v", err)
-	}
-	fmt.Printf("Retrieved %d memories\n", len(memories))
+	/*
+		// Create client with debug logging and custom configuration
+		client := mem.NewMem0Client(apiKey,
+			mem.WithDebug(true),
+			mem.WithBaseURL("https://api.mem0.ai/v1"), // Optional custom base URL
+			// mem.WithUserID("custom-user-123"),
+			// mem.WithOrganizationID("org-123"),
+			// mem.WithProjectID("project-456"),
+		)
 
-	for i, m := range memories {
-		fmt.Printf("Memory %d: %+v\n", i+1, m)
-	}
+		ctx := context.Background()
+
+		timestamp := time.Now().UTC().Format(time.RFC3339)
+
+		UserID := "test-user"
+		// AgentID := "test-agent"
+		// AppID := "test-app"
+		// RunID := "test-run"
+
+		// Store a memory with comprehensive options
+		storeOpts := &mem.StoreOptions{
+			Messages: []mem.Message{
+				{
+					Role:    "user",
+					Content: fmt.Sprintf("Test memory created at %s", timestamp),
+				},
+			},
+			OutputFormat: ptr.String("v1.1"),
+			UserID:       UserID,
+			// Infer:        ptr.Bool(false),
+			// AgentID:      AgentID,
+			// AppID:        AppID,
+			// RunID:        RunID,
+			Metadata: mem.Metadata{
+				"source":    "test_client",
+				"timestamp": timestamp,
+				"test_run":  "memory_retrieval_test",
+			},
+		}
+
+		memory, err := client.Store(ctx, storeOpts)
+		if err != nil {
+			log.Fatalf("Failed to store memory: %v", err)
+		}
+		fmt.Printf("Stored Memory ID: %s\n", memory.ID)
+
+		// Demonstrate GetMemories
+		getOpts := &mem.GetMemoriesOptions{
+			UserID:   UserID,
+			PageSize: 10,
+			Page:     1,
+			Keywords: "test",
+			Metadata: map[string]string{
+				"test_run": "memory_retrieval_test",
+			},
+		}
+		memories, err := client.GetMemories(ctx, getOpts)
+		if err != nil {
+			log.Fatalf("Failed to get memories: %v", err)
+		}
+		fmt.Printf("Retrieved %d memories\n", len(memories))
+
+		for i, m := range memories {
+			fmt.Printf("Memory %d: %+v\n", i+1, m)
+		} */
 	/*
 
 		// Demonstrate SearchMemories
