@@ -1,53 +1,106 @@
-from mem0 import Memory
+import os
+from fastapi import FastAPI, HTTPException, Query
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from mem0client import Mem0Client, Message, StoreOptions, GetMemoriesOptions, SearchMemoriesOptions
 
-config = {
-    "version": "v1.1"
-}
+# Load API key from environment variable
+API_KEY = os.getenv('MEM0_API_KEY')
+if not API_KEY:
+    raise ValueError("MEM0_API_KEY environment variable is required")
 
-m = Memory.from_config(config_dict=config)
+# Initialize Mem0 client
+mem0_client = Mem0Client(API_KEY)
 
-# For a user
-result = m.add("Likes to play cricket on weekends", 
-user_id="alice", 
-metadata={"category": "hobbies"}, 
+app = FastAPI(
+    title="Mem0 Memory Management API",
+    description="API wrapper for Mem0 memory management service",
+    version="0.1.0"
 )
 
-print("Add Result: ")
-print(result)
+class MessageModel(BaseModel):
+    role: str
+    content: str
 
-# messages = [
-#    {"role": "user", "content": "Hi, I'm Alex. I like to play cricket on weekends."},
-#    {"role": "assistant", "content": "Hello Alex! It's great to know that you enjoy playing cricket on weekends. I'll remember that for future reference."}
-# ]
-# client.add(messages, user_id="alice")
+class StoreMemoryRequest(BaseModel):
+    messages: List[MessageModel]
+    user_id: Optional[str] = None
+    agent_id: Optional[str] = None
+    run_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
 
+class SearchMemoriesRequest(BaseModel):
+    query: str
+    user_id: Optional[str] = None
+    agent_id: Optional[str] = None
+    limit: Optional[int] = 10
 
-# Get all memories
+@app.post("/memories/store")
+async def store_memory(request: StoreMemoryRequest):
+    """
+    Store a new memory with optional metadata and identifiers
+    """
+    try:
+        # Convert Pydantic messages to Mem0 messages
+        messages = [
+            Message(role=msg.role, content=msg.content) 
+            for msg in request.messages
+        ]
+        
+        store_options = StoreOptions(
+            messages=messages,
+            user_id=request.user_id,
+            agent_id=request.agent_id,
+            run_id=request.run_id,
+            metadata=request.metadata or {}
+        )
+        
+        result = mem0_client.Store(store_options)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-all_memories = m.get_all(user_id="alice")
-print("Get All memories: ")
-print(all_memories)
+@app.get("/memories")
+async def get_memories(
+    user_id: Optional[str] = Query(None),
+    agent_id: Optional[str] = Query(None),
+    app_id: Optional[str] = Query(None),
+    run_id: Optional[str] = Query(None)
+):
+    """
+    Retrieve memories with optional filtering
+    """
+    try:
+        options = GetMemoriesOptions(
+            user_id=user_id,
+            agent_id=agent_id,
+            app_id=app_id,
+            run_id=run_id
+        )
+        
+        memories = mem0_client.GetMemories(options)
+        return memories
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-# Get a single memory by ID
-# specific_memory = m.get("bf4d4092-cf91-4181-bfeb-b6fa2ed3061b")
+@app.post("/memories/search")
+async def search_memories(request: SearchMemoriesRequest):
+    """
+    Perform semantic search on memories
+    """
+    try:
+        search_options = SearchMemoriesOptions(
+            query=request.query,
+            user_id=request.user_id,
+            agent_id=request.agent_id,
+            limit=request.limit
+        )
+        
+        results = mem0_client.SearchMemories(search_options)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-# related_memories = m.search(query="What are Alice's hobbies?", user_id="alice")
-
-
-result = m.update(memory_id="f5e54022-0a39-49b2-aed1-8c3fc1c57599", data="Likes to play tennis on weekends")
-
-print("Update Result: ")
-print(result)
-
-# history = m.history(memory_id="bf4d4092-cf91-4181-bfeb-b6fa2ed3061b")
-
-
-# # Delete a memory by id
-# m.delete(memory_id="bf4d4092-cf91-4181-bfeb-b6fa2ed3061b")
-# # Delete all memories for a user
-# m.delete_all(user_id="alice")
-
-
-
-# m.reset() # Reset all memories
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
