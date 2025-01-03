@@ -1,0 +1,201 @@
+<api name="Mem0-get-memories">
+    <endpoint name="Get Memories">
+        <method>GET</method>
+        <path>/v1/memories</path>
+        <description>Retrieve all memories with optional filters.</description>
+        <queryParameters>
+            <parameter name="user_id" type="string" required="false">
+                <description>Filter memories by user ID.</description>
+            </parameter>
+            <parameter name="agent_id" type="string" required="false">
+                <description>Filter memories by agent ID.</description>
+            </parameter>
+            <parameter name="app_id" type="string" required="false">
+                <description>Filter memories by app ID.</description>
+            </parameter>
+            <parameter name="run_id" type="string" required="false">
+                <description>Filter memories by run ID.</description>
+            </parameter>
+            <parameter name="metadata" type="object" required="false">
+                <description>Filter memories by metadata (JSON string).</description>
+            </parameter>
+            <parameter name="categories" type="array" required="false">
+                <description>Filter memories by categories.</description>
+            </parameter>
+            <parameter name="org_id" type="string" required="false">
+                <description>Filter memories by organization ID.</description>
+            </parameter>
+            <parameter name="project_id" type="string" required="false">
+                <description>Filter memories by project ID.</description>
+            </parameter>
+            <parameter name="fields" type="array" required="false">
+                <description>Filter memories by fields.</description>
+            </parameter>
+            <parameter name="keywords" type="string" required="false">
+                <description>Filter memories by keywords.</description>
+            </parameter>
+            <parameter name="page" type="integer" required="false" default="1">
+                <description>Page number for pagination.</description>
+            </parameter>
+            <parameter name="page_size" type="integer" required="false" default="100">
+                <description>Number of items per page.</description>
+            </parameter>
+        </queryParameters>
+        <response>
+            <status code="200" type="application/json">
+                <description>Successful retrieval of memories.</description>
+                <body>
+                    <field name="id" type="string" required="true" />
+                    <field name="name" type="string" required="true" />
+                    <field name="input" type="array" required="true">
+                        <child name="role" type="string" />
+                        <child name="content" type="string" />
+                    </field>
+                    <field name="created_at" type="string" required="true" />
+                    <field name="updated_at" type="string" required="true" />
+                    <field name="total_memories" type="integer" required="true" />
+                    <field name="owner" type="string" required="true" />
+                    <field name="organization" type="string" required="true" />
+                    <field name="metadata" type="object" />
+                    <field name="type" type="enum<string>" required="true">
+                        <options>
+                            <option>user</option>
+                            <option>agent</option>
+                            <option>app</option>
+                            <option>run</option>
+                        </options>
+                    </field>
+                </body>
+            </status>
+            <status code="400" type="application/json">
+                <description>Bad request due to invalid parameters.</description>
+            </status>
+        </response>
+    </endpoint>
+
+    <endpoint name="Search Memories">
+        <method>POST</method>
+        <path>/v1/memories/search</path>
+        <description>Perform a semantic search on memories.</description>
+        <body type="application/json">
+            <parameter name="query" type="string" required="true">
+                <description>The query to search for in the memory.</description>
+            </parameter>
+            <parameter name="agent_id" type="string" required="false" />
+            <parameter name="user_id" type="string" required="false" />
+            <parameter name="app_id" type="string" required="false" />
+            <parameter name="run_id" type="string" required="false" />
+            <parameter name="metadata" type="object" required="false" />
+            <parameter name="top_k" type="integer" required="false" default="10" />
+            <parameter name="fields" type="array" required="false" />
+            <parameter name="rerank" type="boolean" required="false" default="false" />
+            <parameter name="output_format" type="string" required="false" default="v1.0" />
+            <parameter name="org_id" type="string" required="false" />
+            <parameter name="project_id" type="string" required="false" />
+            <parameter name="filter_memories" type="boolean" required="false" default="false" />
+            <parameter name="categories" type="array" required="false" />
+            <parameter name="only_metadata_based_search" type="boolean" required="false" default="false" />
+        </body>
+        <response>
+            <status code="200" type="application/json">
+                <description>Successful search of memories.</description>
+                <body>
+                    <field name="id" type="string" required="true" />
+                    <field name="memory" type="string" required="true" />
+                    <field name="input" type="array" required="true">
+                        <child name="role" type="string" />
+                        <child name="content" type="string" />
+                    </field>
+                    <field name="user_id" type="string" required="true" />
+                    <field name="hash" type="string" required="true" />
+                    <field name="metadata" type="object" />
+                    <field name="created_at" type="string" required="true" />
+                    <field name="updated_at" type="string" required="true" />
+                </body>
+            </status>
+            <status code="400" type="application/json">
+                <description>Bad request due to invalid parameters.</description>
+            </status>
+        </response>
+    </endpoint>
+
+    <endpoint name="Add Memories" method="POST" url="https://api.mem0.ai/v1/memories/">
+        <description>Add memories to the system.</description>
+        <headers>
+            <header name="Authorization" type="string" required="true">API key for authentication</header>
+            <header name="Content-Type" type="string" required="true">application/json</header>
+        </headers>
+        <body type="application/json">
+            <parameter name="messages" type="array" required="true">
+                <description>An array of message objects with 'role' and 'content' fields.</description>
+            </parameter>
+            <parameter name="agent_id" type="string" required="false">The unique identifier of the agent.</parameter>
+            <parameter name="user_id" type="string" required="false">The unique identifier of the user.</parameter>
+            <parameter name="app_id" type="string" required="false">The unique identifier of the application.</parameter>
+            <parameter name="run_id" type="string" required="false">The unique identifier of the run.</parameter>
+            <parameter name="metadata" type="object" required="false">Additional metadata in JSON format.</parameter>
+            <parameter name="includes" type="string" required="false">String to include specific preferences.</parameter>
+            <parameter name="excludes" type="string" required="false">String to exclude specific preferences.</parameter>
+            <parameter name="infer" type="boolean" required="false">Whether to infer the memories or store directly.</parameter>
+            <parameter name="custom_categories" type="object" required="false">List of categories with descriptions.</parameter>
+            <parameter name="org_name" type="string" required="false">The name of the organization.</parameter>
+            <parameter name="project_name" type="string" required="false">The name of the project.</parameter>
+        </body>
+        <responses>
+            <response code="200" type="application/json">
+                <description>Memory added successfully.</description>
+                <body>
+                    <parameter name="message" type="string">ok</parameter>
+                </body>
+            </response>
+            <response code="400" type="application/json">
+                <description>Bad request due to invalid input.</description>
+            </response>
+        </responses>
+    </endpoint>
+
+    <endpoint name="Update Memory" method="PUT" url="https://api.mem0.ai/v1/memories/{memory_id}/">
+        <description>Update a specific memory by ID.</description>
+        <headers>
+            <header name="Authorization" type="string" required="true">API key for authentication</header>
+        </headers>
+        <pathParameters>
+            <parameter name="memory_id" type="string" required="true">The unique identifier of the memory to update.</parameter>
+        </pathParameters>
+        <body type="application/json">
+            <parameter name="text" type="string" required="true">The updated text content of the memory.</parameter>
+            <parameter name="user_id" type="string" required="false">The user ID associated with the memory.</parameter>
+            <parameter name="agent_id" type="string" required="false">The agent ID associated with the memory.</parameter>
+            <parameter name="app_id" type="string" required="false">The app ID associated with the memory.</parameter>
+            <parameter name="run_id" type="string" required="false">The run ID associated with the memory.</parameter>
+            <parameter name="metadata" type="object" required="false">Additional metadata in JSON format.</parameter>
+        </body>
+        <responses>
+            <response code="200" type="application/json">
+                <description>Memory updated successfully.</description>
+                <body>
+                    <parameter name="id" type="string">The unique identifier of the updated memory.</parameter>
+                </body>
+            </response>
+            <response code="400" type="application/json">
+                <description>Bad request due to invalid input.</description>
+            </response>
+        </responses>
+    </endpoint>
+
+    <endpoint name="Delete Memory">
+        <method>DELETE</method>
+        <path>/v1/memories/{memory_id}</path>
+        <description>Delete a specific memory by its ID.</description>
+        <pathParameters>
+            <parameter name="memory_id" type="string" required="true">
+                <description>The unique identifier of the memory to delete.</description>
+            </parameter>
+        </pathParameters>
+        <response>
+            <status code="204" type="application/json">
+                <description>Memory deleted successfully.</description>
+            </status>
+        </response>
+    </endpoint>
+</api>
