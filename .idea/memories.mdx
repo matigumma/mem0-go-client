@@ -1,0 +1,61 @@
+Overview of the Get Memories API
+Endpoint
+GET /v1/memories
+Authentication
+Authorization: Requires an API key. The key must be prefixed with 'Token '. For example:
+text
+Authorization: Token your_api_key
+Query Parameters
+You can filter memories using the following optional parameters:
+user_id: Filter memories by user ID.
+agent_id: Filter memories by agent ID.
+app_id: Filter memories by application ID.
+run_id: Filter memories by run ID.
+metadata: Filter memories by metadata (JSON string).
+categories: Filter memories by categories (array).
+org_name: (Deprecated) Filter by organization name; use org_id instead.
+project_name: (Deprecated) Filter by project name; use project_id instead.
+org_id: Filter memories by organization ID.
+project_id: Filter memories by project ID.
+fields: Specify which fields to include in the response (array).
+keywords: Search for specific keywords within memories.
+page: Specify the page number for pagination (default is 1).
+page_size: Specify the number of items per page (default is 100).
+Response Format
+On success, the API returns a 200 status code with a JSON response containing:
+id: Unique identifier for the memory (required).
+name: Name of the memory (required).
+input: An array of objects containing:
+role: Role associated with the memory input.
+content: Content of the memory input.
+created_at: Timestamp when the memory was created (required).
+updated_at: Timestamp when the memory was last updated (required).
+total_memories: Total number of memories returned (required).
+owner: Identifier of the memory owner (required).
+organization: Organization associated with the memory (required).
+metadata: Any additional metadata related to the memory.
+type: Type of memory, which can be one of several enumerated options (required).
+Example Request
+text
+GET /v1/memories?user_id=123&page=1&page_size=50 HTTP/1.1
+Authorization: Token your_api_key
+Example Response
+```json
+{
+  "id": "memory_001",
+  "name": "Memory Title",
+  "input": [
+    {
+      "role": "user",
+      "content": "This is a sample memory content."
+    }
+  ],
+  "created_at": "2024-01-01T12:00:00Z",
+  "updated_at": "2024-01-02T12:00:00Z",
+  "total_memories": 100,
+  "owner": "user_123",
+  "organization": "org_456",
+  "metadata": {},
+  "type": "user"
+}
+```

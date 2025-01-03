@@ -1,18 +1,36 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"time"
 
+	"github.com/aws/smithy-go/ptr"
 	mem "github.com/matigumma/mem0-go-client/mem0client"
 )
 
 func main() {
 	apiKey := os.Getenv("MEM0_API_KEY")
 	if apiKey == "" {
-		log.Fatal("MEM0_API_KEY environment variable is required")
+		// Try getting from .env file
+		if file, err := os.Open(".env"); err == nil {
+			defer file.Close()
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.HasPrefix(line, "MEM0_API_KEY=") {
+					apiKey = strings.TrimSpace(strings.TrimPrefix(line, "MEM0_API_KEY="))
+					break
+				}
+			}
+		}
+		if apiKey == "" {
+			log.Fatal("MEM0_API_KEY environment variable is required")
+		}
 	}
 
 	// Create client with debug logging and custom configuration
@@ -26,20 +44,88 @@ func main() {
 
 	ctx := context.Background()
 
-	// Store a memory
-	memory, err := client.Store(ctx, "This is a test memory", mem.Metadata{
-		"source": "test",
-		"tags":   []string{"example", "demo"},
-	})
+	timestamp := time.Now().UTC().Format(time.RFC3339)
+
+	UserID := "test-user"
+	// AgentID := "test-agent"
+	// AppID := "test-app"
+	// RunID := "test-run"
+
+	// Store a memory with comprehensive options
+	storeOpts := &mem.StoreOptions{
+		Messages: []mem.Message{
+			{
+				Role:    "user",
+				Content: fmt.Sprintf("Test memory created at %s", timestamp),
+			},
+		},
+		OutputFormat: ptr.String("v1.1"),
+		UserID:       UserID,
+		// Infer:        ptr.Bool(false),
+		// AgentID:      AgentID,
+		// AppID:        AppID,
+		// RunID:        RunID,
+		Metadata: mem.Metadata{
+			"source":    "test_client",
+			"timestamp": timestamp,
+			"test_run":  "memory_retrieval_test",
+		},
+	}
+
+	memory, err := client.Store(ctx, storeOpts)
 	if err != nil {
 		log.Fatalf("Failed to store memory: %v", err)
 	}
 	fmt.Printf("Stored Memory ID: %s\n", memory.ID)
 
-	// Query memories
-	memories, err := client.Query(ctx, "test memory", 5)
-	if err != nil {
-		log.Fatalf("Failed to query memories: %v", err)
+	// Demonstrate GetMemories
+	getOpts := &mem.GetMemoriesOptions{
+		UserID:   UserID,
+		PageSize: 10,
+		Page:     1,
+		Keywords: "test",
+		Metadata: map[string]string{
+			"test_run": "memory_retrieval_test",
+		},
 	}
-	fmt.Printf("Found %d memories\n", len(memories))
+	memories, err := client.GetMemories(ctx, getOpts)
+	if err != nil {
+		log.Fatalf("Failed to get memories: %v", err)
+	}
+	fmt.Printf("Retrieved %d memories\n", len(memories))
+
+	for i, m := range memories {
+		fmt.Printf("Memory %d: %+v\n", i+1, m)
+	}
+	/*
+
+		// Demonstrate SearchMemories
+		searchOpts := &mem.SearchMemoriesOptions{
+			Query:  "test memory",
+			TopK:   5,
+			UserID: "test-user",
+			// AgentID: "test-agent",
+			Rerank: true,
+		}
+		searchResults, err := client.SearchMemories(ctx, searchOpts)
+		if err != nil {
+			log.Fatalf("Failed to search memories: %v", err)
+		}
+		fmt.Printf("Found %d memories in search\n", len(searchResults))
+
+		// Demonstrate UpdateMemory (if a memory ID is available)
+		if memory != nil && memory.ID != "" {
+			updateOpts := &mem.UpdateMemoryOptions{
+				Text: "Updated test memory content",
+				Metadata: map[string]string{
+					"updated": "true",
+				},
+			}
+			updatedMemory, err := client.UpdateMemory(ctx, memory.ID, updateOpts)
+			if err != nil {
+				log.Fatalf("Failed to update memory: %v", err)
+			}
+			fmt.Printf("Updated Memory ID: %s\n", updatedMemory.ID)
+		}
+	*/
 }
