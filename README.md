@@ -1,4 +1,4 @@
-# Mem0 Go Client
+# Mem0 Go Client - NOT READY YET.
 
 A Golang client for interacting with the Mem0 Memory API.
 
